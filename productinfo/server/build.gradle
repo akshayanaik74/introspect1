@@ -1,0 +1,98 @@
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'org.sonarqube'
+apply plugin: 'jacoco'
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "Productinfo Server"
+        property "sonar.projectKey", "productinfoServer"
+        property "sonar.jacoco.reportPath", "${project.buildDir}/jacoco/test.exec"
+        property 'sonar.host.url', 'http://localhost:9002'
+        property "sonar.login", "d2be356d027f898b9863a2b3576a24b7205604ad"
+        property 'sonar.java.source', 11
+        property 'sonar.junit.reportPaths', 'build/results'
+        property 'encoding', 'UTF-8'
+        property 'charSet', 'UTF-8'
+        property "sonar.coverage.jacoco.xmlReportPaths", "path.xml"
+    }
+}
+
+
+repositories {
+       mavenCentral()  
+}
+
+def grpcVersion = '1.43.0'
+def protobufVersion = '3.19.2'
+def protocVersion = protobufVersion
+
+dependencies {
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    compileOnly "org.apache.tomcat:annotations-api:6.0.53"
+
+    // examples/advanced need this for JsonFormat
+    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+
+    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+}
+
+
+
+buildscript {
+    repositories { 
+mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.17'
+	classpath 'org.ajoberstar:gradle-jacoco:0.1.0'
+      classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.2.0"
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.17.2'
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "ecommerce.ProductInfoServer"
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+// Generate IntelliJ IDEA's .idea & .iml project files
+apply plugin: 'idea'
+
+// Provide convenience executables for trying out the examples.
+apply plugin: 'application'
+
+startScripts.enabled = false
