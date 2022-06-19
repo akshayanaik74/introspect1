@@ -1,4 +1,4 @@
-## ``ProductInfo`` Service and Client - Java Implementation
+## ``ProductInfo`` Service and Client
 
 ### Building and Running Service
 
